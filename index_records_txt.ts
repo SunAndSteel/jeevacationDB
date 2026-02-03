@@ -115,6 +115,7 @@ function ensureSchema(db: DB): void {
     CREATE TABLE IF NOT EXISTS docs(
       run_id TEXT NOT NULL,
       doc_id TEXT NOT NULL,
+      source_file TEXT,
       meta_json TEXT,
       text_sha256 TEXT,
       text_chars INTEGER,
@@ -143,9 +144,15 @@ function ensureSchema(db: DB): void {
       text,
       content='chunks',
       content_rowid='id',
-      tokenize="unicode61"
+      tokenize="unicode61 remove_diacritics 2"
     );
   `);
+
+  const docsColumns = db.queryEntries<{ name: string }>("PRAGMA table_info(docs)");
+  const hasSourceFile = docsColumns.some((col) => col.name === "source_file");
+  if (!hasSourceFile) {
+    db.execute("ALTER TABLE docs ADD COLUMN source_file TEXT");
+  }
 }
 
 function formatBytes(bytes: number): string {
@@ -220,9 +227,10 @@ if (reset) {
 }
 
 const stmtDoc = db.prepareQuery(`
-  INSERT INTO docs(run_id, doc_id, meta_json, text_sha256, text_chars)
-  VALUES (?, ?, ?, ?, ?)
+  INSERT INTO docs(run_id, doc_id, source_file, meta_json, text_sha256, text_chars)
+  VALUES (?, ?, ?, ?, ?, ?)
   ON CONFLICT(run_id, doc_id) DO UPDATE SET
+    source_file=excluded.source_file,
     meta_json=excluded.meta_json,
     text_sha256=excluded.text_sha256,
     text_chars=excluded.text_chars;
@@ -289,7 +297,7 @@ for await (const entry of walk(inputDir, { includeDirs: false, exts: [".txt"] })
       chunk_target_size: chunkSize,
     };
 
-    stmtDoc.execute([runId, docId, JSON.stringify(meta), textSha, bodyClean.length]);
+    stmtDoc.execute([runId, docId, entry.path, JSON.stringify(meta), textSha, bodyClean.length]);
     stats.docs += 1;
     docSinceCommit += 1;
 
@@ -297,7 +305,7 @@ for await (const entry of walk(inputDir, { includeDirs: false, exts: [".txt"] })
     for (let i = 0; i < parts.length; i += 1) {
       const chunkId = `${docId}:${String(i).padStart(4, "0")}`;
       const uid = `${runId}:${chunkId}`;
-      stmtChunk.execute([uid, runId, chunkId, i, docId, entry.path, parts[i]]);
+      stmtChunk.execute([uid, runId, chunkId, i, docId, null, parts[i]]);
       const rowid = db.lastInsertRowId;
       if (rowid) {
         stmtFts.execute([rowid, parts[i]]);

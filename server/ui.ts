@@ -6,55 +6,112 @@ export const INDEX_HTML = `<!doctype html>
   <title>Records Search</title>
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: #0b0c10;
-      --fg: #e7e7e7;
-      --muted: #a7a7a7;
-      --card: rgba(255,255,255,0.06);
-      --border: rgba(255,255,255,0.12);
-      --accent: #7dd3fc;
+      color-scheme: dark;
+      --bg: #050707;
+      --fg: #d7fbd7;
+      --muted: #7fbf7f;
+      --card: #0a120a;
+      --border: #1e3a1e;
+      --accent: #41ff5d;
+      --accent-soft: rgba(65, 255, 93, 0.18);
+      --shadow: rgba(0, 255, 88, 0.08);
     }
-    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background: var(--bg); color: var(--fg); }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
-    h1 { font-size: 18px; margin: 0 0 12px; color: var(--fg); font-weight: 650; }
+    body {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      background: var(--bg);
+      color: var(--fg);
+      letter-spacing: 0.2px;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px 20px 26px; }
+    h1 {
+      font-size: 18px;
+      margin: 0 0 12px;
+      color: var(--accent);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.6px;
+    }
     .bar { display: grid; grid-template-columns: 1fr auto auto auto; gap: 10px; align-items: center; }
     input[type="text"] {
-      width: 100%; padding: 12px 12px; border-radius: 12px;
-      border: 1px solid var(--border); background: rgba(255,255,255,0.04); color: var(--fg);
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #040a04;
+      color: var(--fg);
       outline: none;
+      box-shadow: 0 0 0 1px transparent;
+    }
+    input[type="text"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent);
     }
     select, button {
-      padding: 11px 12px; border-radius: 12px; border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04); color: var(--fg); cursor: pointer;
+      padding: 11px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #050c05;
+      color: var(--fg);
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
     }
-    button { font-weight: 600; }
-    button:hover { border-color: rgba(255,255,255,0.22); }
-    .hint { margin-top: 8px; color: var(--muted); font-size: 13px; line-height: 1.35; }
-    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 14px; }
+    button { font-weight: 700; }
+    button:hover { border-color: var(--accent); color: var(--accent); }
+    .hint {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+      border-left: 2px solid var(--border);
+      padding-left: 10px;
+    }
+    .grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 16px; }
     .card {
-      border: 1px solid var(--border); background: var(--card); border-radius: 14px; padding: 12px 12px;
+      border: 1px solid var(--border);
+      background: var(--card);
+      border-radius: 6px;
+      padding: 12px 12px;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 18px var(--shadow);
     }
     .row { display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
     .row .left { display: flex; align-items: center; gap: 10px; }
     .meta { color: var(--muted); font-size: 12px; }
-    .doc { color: var(--accent); font-weight: 650; }
-    .snippet { margin-top: 8px; white-space: pre-wrap; font-size: 13px; line-height: 1.35; }
-    .snippet mark { background: rgba(125,211,252,0.25); color: inherit; padding: 0 2px; border-radius: 4px; }
-    .pager { display: flex; gap: 8px; margin-top: 14px; align-items: center; }
+    .doc { color: var(--accent); font-weight: 700; }
+    .snippet { margin-top: 8px; white-space: pre-wrap; font-size: 13px; line-height: 1.4; }
+    .snippet mark { background: var(--accent-soft); color: var(--fg); padding: 0 2px; border-radius: 3px; }
+    .pager { display: flex; gap: 8px; margin-top: 16px; align-items: center; }
     .pager .sp { flex: 1; }
     .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
     a { color: var(--accent); text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    dialog { max-width: 900px; width: 92vw; border: 1px solid var(--border); border-radius: 16px; background: #0f1116; color: var(--fg); }
+    a:hover { text-decoration: underline; text-decoration-thickness: 2px; }
+    dialog {
+      max-width: 900px;
+      width: 92vw;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #071007;
+      color: var(--fg);
+      box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+    }
     dialog::backdrop { background: rgba(0,0,0,0.55); }
     .dochead { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-bottom:10px; }
-    .docbody { white-space: pre-wrap; font-size: 13px; line-height: 1.4; }
+    .docbody { white-space: pre-wrap; font-size: 13px; line-height: 1.5; }
     .close { padding: 10px 12px; }
-    .mark { border-radius: 999px; padding: 6px 10px; border: 1px solid var(--border); background: rgba(255,255,255,0.04); }
-    .mark[data-active="true"] { border-color: rgba(125,211,252,0.6); box-shadow: 0 0 0 1px rgba(125,211,252,0.3) inset; }
+    .mark { border-radius: 999px; padding: 6px 10px; border: 1px solid var(--border); background: #050c05; }
+    .mark[data-active="true"] {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px var(--accent) inset;
+      color: var(--accent);
+    }
     .marks-dialog ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
-    .marks-dialog li { border: 1px solid var(--border); border-radius: 12px; padding: 8px 10px; }
+    .marks-dialog li { border: 1px solid var(--border); border-radius: 6px; padding: 8px 10px; }
     .marks-actions { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+    .card::before {
+      content: "> ";
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
