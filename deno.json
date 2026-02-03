@@ -1,0 +1,5 @@
+{
+    "tasks": {
+        "dev": "deno run -A server.ts --db records.sqlite --port 8787"
+    }
+}

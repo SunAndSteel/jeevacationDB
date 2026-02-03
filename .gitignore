@@ -1,0 +1,16 @@
+cat > .gitignore <<EOF
+# Bases de données
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+
+# Deno
+deno.lock
+
+# OS / éditeurs
+.vscode/
+.DS_Store
+
+# Logs
+*.log
+EOF
