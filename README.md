@@ -7,6 +7,12 @@ Recherche FTS dans le dataset compressé (9-12)
 1. `Set-ExecutionPolicy Unrestricted`
 2. Exécuter le script `start.ps1`
 
+## Indexation (Deno)
+
+```bash
+deno run -A index_records_txt.ts --input ./epstein-justice-files-text/Datasets-9-12 --db /chemin/vers/records.sqlite --run content --dedupe 1 --chunk-size 2000
+```
+
 ### Exemples de requêtes :
 
 - `epstein`
