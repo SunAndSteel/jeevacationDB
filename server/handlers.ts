@@ -27,13 +27,14 @@ export function createHandlers(db: DB, runId: string) {
   const qChunks = db.prepareQuery(`
     SELECT
       c.doc_id AS doc_id,
-      c.source_file AS source_file,
+      COALESCE(c.source_file, d.source_file) AS source_file,
       c.order_index AS order_index,
       snippet(chunks_fts, 0, '[', ']', ' … ', 12) AS snippet,
       bm25(chunks_fts) AS score,
       CASE WHEN m.doc_id IS NULL THEN 0 ELSE 1 END AS marked
     FROM chunks_fts
     JOIN chunks c ON c.id = chunks_fts.rowid
+    LEFT JOIN docs d ON d.run_id = c.run_id AND d.doc_id = c.doc_id
     LEFT JOIN marks m ON m.run_id = c.run_id AND m.doc_id = c.doc_id
     WHERE c.run_id = ? AND chunks_fts MATCH ?
     ORDER BY score
@@ -43,12 +44,13 @@ export function createHandlers(db: DB, runId: string) {
   const qDocs = db.prepareQuery(`
     SELECT
       c.doc_id AS doc_id,
-      MIN(c.source_file) AS source_file,
+      MIN(COALESCE(c.source_file, d.source_file)) AS source_file,
       MIN(bm25(chunks_fts)) AS best_score,
       COUNT(*) AS hit_chunks,
       CASE WHEN m.doc_id IS NULL THEN 0 ELSE 1 END AS marked
     FROM chunks_fts
     JOIN chunks c ON c.id = chunks_fts.rowid
+    LEFT JOIN docs d ON d.run_id = c.run_id AND d.doc_id = c.doc_id
     LEFT JOIN marks m ON m.run_id = c.run_id AND m.doc_id = c.doc_id
     WHERE c.run_id = ? AND chunks_fts MATCH ?
     GROUP BY c.doc_id
@@ -58,12 +60,13 @@ export function createHandlers(db: DB, runId: string) {
 
   const qDocText = db.prepareQuery(`
     SELECT
-      MIN(source_file) AS source_file,
+      COALESCE(
+        (SELECT source_file FROM docs WHERE run_id = ? AND doc_id = ?),
+        (SELECT MIN(source_file) FROM chunks WHERE run_id = ? AND doc_id = ?)
+      ) AS source_file,
       EXISTS(
         SELECT 1 FROM marks WHERE run_id = ? AND doc_id = ?
       ) AS marked
-    FROM chunks
-    WHERE run_id = ? AND doc_id = ?;
   `);
 
   const qDocChunks = db.prepareQuery(`
@@ -74,9 +77,10 @@ export function createHandlers(db: DB, runId: string) {
   `);
 
   const qMarks = db.prepareQuery(`
-    SELECT m.doc_id, m.created_at, MIN(c.source_file) AS source_file
+    SELECT m.doc_id, m.created_at, MIN(COALESCE(c.source_file, d.source_file)) AS source_file
     FROM marks m
     LEFT JOIN chunks c ON c.run_id = m.run_id AND c.doc_id = m.doc_id
+    LEFT JOIN docs d ON d.run_id = m.run_id AND d.doc_id = m.doc_id
     WHERE m.run_id = ?
     GROUP BY m.doc_id, m.created_at
     ORDER BY m.created_at DESC;
@@ -131,7 +135,7 @@ export function createHandlers(db: DB, runId: string) {
     if (!docId) return json({ error: "missing doc_id" }, 400);
 
     try {
-      const metaRow = qDocText.first([runId, docId, runId, docId]);
+      const metaRow = qDocText.first([runId, docId, runId, docId, runId, docId]);
       const sourceFile = metaRow ? String(metaRow[0] ?? "") : "";
       const marked = metaRow ? Boolean(metaRow[1]) : false;
 
